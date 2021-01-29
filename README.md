@@ -1,24 +1,35 @@
-# bili-live-tool2
+# bili-live-tool
 
-## Project setup
+> 哔哩直播小助手
+
+## 项目步骤
+
+### 安装依赖
 ```
 yarn install
 ```
-
-### Compiles and hot-reloads for development
+或
 ```
-yarn serve
-```
-
-### Compiles and minifies for production
-```
-yarn build
+npm install
 ```
 
-### Lints and fixes files
+### 开发运行
 ```
-yarn lint
+yarn electron:serve
+```
+或
+```
+npm run electron:serve
 ```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+### 打包构建程序
+```
+yarn electron:build
+```
+或
+```
+npm run electron:build
+```
+
+## 开源协议
+MIT

@@ -11,12 +11,18 @@
 
 <script>
 export default {
-  name: "danmu-msg",
+  name: 'danmu-msg',
   props: {
     data: {
       type: Array,
-      default: () => []
-    }
+      default: () => [],
+    },
+  },
+  created() {
+    console.log(this.msg);
+    const url = 'http://tts.baidu.com/text2audio?lan=zh&ie=UTF-8&text=' + encodeURI(this.msg);
+    const audio = new Audio(url);
+    audio.play();
   },
   computed: {
     medal() {
@@ -31,8 +37,8 @@ export default {
     },
     msg() {
       return this.data[1];
-    }
-  }
+    },
+  },
 };
 </script>
 

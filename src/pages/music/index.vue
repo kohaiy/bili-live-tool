@@ -1,6 +1,7 @@
 <template>
   <div class="music">
     <audio ref="audio"></audio>
+    <!-- 播放控制条 -->
     <div class="audio-controls">
       <div class="process-bar" :style="{ width: `${processPercent}%` }"></div>
       <div class="play-btn" @click="handlePlayBtnClick">
@@ -11,14 +12,15 @@
         <div class="volume-inner" :style="{ width: `${volumePercent}%` }"></div>
       </div>
     </div>
-    <div v-if="playing" class="playing">正在播放 - {{ playing.name }} - {{
-        playing.artists.map(({ name }) => name).join(',')
-      }}
-    </div>
     <div class="action-btn">
+<!--      <div class="show-more-btn"><i class="el-icon-s-operation"></i></div>-->
       <el-button @click="handleNext" type="primary" size="mini">切歌</el-button>
       <el-button @click="handleClear" type="warning" size="mini">清空</el-button>
       <el-button @click="handleClose" type="danger" size="mini">关闭</el-button>
+    </div>
+    <div v-if="playing" class="playing">正在播放 - {{ playing.name }} - {{
+        playing.artists.map(({ name }) => name).join(',')
+      }}
     </div>
     <ul class="song-list">
       <li class="song-item" @click="handleClickSong(i)" v-for="(it, i) in songs" :key="it.id">
@@ -60,22 +62,27 @@ export default {
   },
   mounted() {
     this.play();
+    // 每隔一秒读取缓存里面有没有新的歌要点
     setInterval(() => {
       const song = JSON.parse(localStorage.getItem('NEW_SONG') || 'null');
       if (song) {
         localStorage.setItem('NEW_SONG', 'null');
+        // 读取到歌曲，调用添加到方法
         this.handleAddSong(song);
       }
     }, 1000);
+    // 监听歌曲状态
     this.$refs.audio.addEventListener('play', () => {
       this.isPlaying = true;
     });
     this.$refs.audio.addEventListener('pause', () => {
       this.isPlaying = false;
     });
+    // 监听音量改变
     this.$refs.audio.addEventListener('volumechange', () => {
       this.audioInfo.volume = this.$refs.audio.volume;
     });
+    // 监听歌曲结束，切歌
     this.$refs.audio.addEventListener('ended', this.handleAudioEnded);
     this.$refs.audio.addEventListener('timeupdate', () => {
       this.audioInfo.currentTime = this.$refs.audio.currentTime;
@@ -91,6 +98,7 @@ export default {
     },
   },
   methods: {
+    // 播放/暂停
     handlePlayBtnClick() {
       if (this.$refs.audio) {
         if (this.isPlaying) {
@@ -100,52 +108,73 @@ export default {
         }
       }
     },
+    // 调整音量
     handleVolumeClick(event) {
       const { width } = this.$refs.volume.getBoundingClientRect();
       this.$refs.audio.volume = Math.max(0, Math.min(1, event.offsetX / width));
     },
+    // 切歌
     handleNext() {
       this.play();
     },
+    // 清空歌单
     handleClear() {
       this.songs = [];
     },
     handleAudioEnded() {
       this.play();
     },
+    // 往歌单中添加歌曲
     handleAddSong(song) {
+      // 判断歌单是否达到上限
       if (this.songs.length < 100) {
+        // 判断歌单中是否已有该歌曲
         if (!this.songs.some(({ id }) => id === song.id)) {
           this.songs.push(song);
           console.log(song);
+          // 如果不在播放，则调用 play 播放
           if (!this.playing) {
             this.play();
           }
         }
       }
     },
+    // 播放歌曲
     async play() {
       this.$nextTick(async () => {
+        // 判断歌单是否有歌，且组件已就绪
         if (this.songs.length && this.$refs.audio) {
           try {
+            // 取出歌单中的第一首
             this.playing = this.songs.shift();
             const { id } = this.playing;
             this.$refs.audio.src = `https://music.163.com/song/media/outer/url?id=${id}.mp3`;
+            // 开始播放
             await this.$refs.audio.play();
+            // 保存歌曲时长
             this.audioInfo.duration = this.$refs.audio.duration;
           } catch (e) {
             console.log(e);
+            this.$message({
+              type: 'error',
+              message: '哦欧，播放失败了，可能是没版权吧～',
+              duration: 1500,
+            });
+            // 播放失败后，播放下一首
             setTimeout(() => {
               this.play();
             });
           }
         } else {
+          // 清空正在播放的歌曲
           this.playing = null;
           this.$refs.audio.src = '';
+          // 获取随机歌曲
           await this.getRandomSong();
         }
       });
     },
+    // 获取热门歌单中的随机歌曲
     async getRandomSong() {
       const trackIds = await NeteaseCloudUtil.getHotList();
       if (trackIds) {
@@ -154,8 +183,11 @@ export default {
         this.handleAddSong(song);
       }
     },
+    // 点击删除歌曲
     handleClickSong(index) {
-      this.songs.splice(index, 1);
+      console.log(index);
+      // 先不要了
+      // this.songs.splice(index, 1);
     },
     handleClose() {
       remote.getCurrentWindow().close();
@@ -199,19 +231,20 @@ export default {
     min-height: 40px;
     height: 40px;
     padding: 0 10px;
-    border-radius: 5px;
     color: #eeeeee;
-    background-color: #666666;
+    border-radius: 0;
+    background-color: transparent;
     overflow: hidden;
+    transition: all .3s;
     -webkit-app-region: no-drag;
 
     .process-bar {
       position: absolute;
-      top: 0;
-      left: 0;
       bottom: 0;
-      //border-right: 1px solid #ffffff;
+      left: 0;
+      height: 4px;
       background-color: #1979ec;
+      transition: all .3s;
 
       &::after {
         content: '';
@@ -230,6 +263,7 @@ export default {
       font-size: 20px;
       cursor: pointer;
       transition: all .3s;
+      opacity: 0;
 
       &:hover {
         transform: scale(1.5);
@@ -274,6 +308,18 @@ export default {
     }
 
     &:hover {
+      border-radius: 5px;
+      background-color: #666666;
+
+      .process-bar {
+        bottom: 0;
+        height: 100%;
+      }
+
+      .play-btn {
+        opacity: 1;
+      }
+
       .volume {
         transform: translateY(0);
         opacity: 1;
@@ -282,26 +328,39 @@ export default {
   }
 
   .playing {
+    position: relative;
+    bottom: -12px;
+    height: 0;
+    //margin-top: 20px;
     text-align: center;
     font-size: 14px;
     color: #cccccc;
     text-shadow: 0 0 10px #ff4d51;
-    background-color: rgba(0, 0, 0, .8);
+    //background-color: rgba(0, 0, 0, .8);
   }
 
   .action-btn {
     display: flex;
     justify-content: flex-end;
     margin-top: 20px;
+
+    .show-more-btn {
+      font-size: 18px;
+      color: #ffffff;
+    }
+
+    .el-button {
+      //visibility: hidden;
+    }
   }
 
   .song-list {
     flex: 1;
-    margin-top: 20px;
-    padding: 20px;
+    margin-top: 4px;
+    padding: 24px 16px 16px;
     border-radius: 5px;
     overflow: auto;
-    background-color: rgba(0, 0, 0, .2);
+    background-color: rgba(0, 0, 0, .8);
 
     .song-item {
       position: relative;
@@ -309,17 +368,18 @@ export default {
       cursor: pointer;
 
       .uname {
-        font-size: 14px;
+        font-size: 12px;
         color: #3a8ee6;
       }
 
       .action {
-        margin: 0 4px;
-        font-size: 14px;
-        color: #999999;
+        margin: 0 8px 0 4px;
+        font-size: 12px;
+        color: #aaaaaa;
       }
 
       .song-name {
+        font-size: 12px;
         color: #ffffff;
       }
 
@@ -329,7 +389,7 @@ export default {
       }
 
       + .song-item {
-        margin-top: 10px;
+        margin-top: 4px;
       }
 
       &::after {
@@ -353,7 +413,7 @@ export default {
         &::after {
           //visibility: visible;
           //transform: translateY(0);
-          opacity: 1;
+          //opacity: 1;
         }
       }
     }

@@ -68,7 +68,7 @@ export default {
         ws.onmessage = async (msgEvent) => {
           // console.log(msgEvent);
           const packet = await decode(msgEvent.data);
-          // console.log('packet.body', packet.body);
+          // console.warn(packet);
           switch (packet.op) {
             case 8:
               console.log('加入房间');
@@ -79,6 +79,8 @@ export default {
             case 5:
               packet.body.forEach((body, i) => {
                 body.id = Date.now().toString() + `_${i}_` + Math.round(Math.random() * 8000 + 1000);
+                body.time = Date.now();
+                body.isEnter = body.cmd === 'INTERACT_WORD' && body.data.msg_type === 1;
                 this.appendMessage(body);
                 // console.log(body);
                 switch (body.cmd) {
@@ -91,9 +93,12 @@ export default {
                     // console.log(`%c[*] ${body.data.uname} ${body.data.action} ${body.data.num} 个 ${body.data.giftName}`, 'color:green;');
                     break;
                   case 'COMBO_SEND':
-                    console.log('COMBO_SEND', body);
+                    // console.log('COMBO_SEND', body);
                     break;
                   case 'INTERACT_WORD':
+                    if (body.data.msg_type > 2) {
+                      console.error('body.data.msg_type > 2', body.data);
+                    }
                     break;
                     //   case 'WELCOME':
                     //     console.log(`欢迎 ${body.data.uname}`);
@@ -128,6 +133,7 @@ export default {
       const [message, uname] = [body.info[1], body.info[2][1]];
       if (/^点歌 /.test(message)) {
         const keywords = message.replace('点歌', '').trim();
+        // 通过关键词搜索网易歌曲
         const song = await NeteaseCloudUtil.search(keywords);
         console.log(song);
         if (song) {
@@ -139,6 +145,7 @@ export default {
           // });
           // localStorage.setItem('songs', JSON.stringify(songs));
           song.uname = uname;
+          // 把歌曲信息存储到localStorage里面，供另一个窗口读取
           localStorage.setItem('NEW_SONG', JSON.stringify(song));
           // }
         }
@@ -162,6 +169,9 @@ export default {
     handleScroll() {
       const { scrollHeight, scrollTop, clientHeight } = this.$refs.list;
       this.isToBottom = scrollHeight - scrollTop - clientHeight <= 10;
+      if (this.isToBottom) {
+        this.unreadTotal = 0;
+      }
     },
   },
 };

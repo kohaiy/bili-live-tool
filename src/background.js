@@ -22,6 +22,7 @@ async function createWindow() {
         transparent: process.platform !== 'win32',
         frame: false,
         opacity: 0.8,
+        hasShadow: false,
         webPreferences: {
             // Use pluginOptions.nodeIntegration, leave this alone
             // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
@@ -78,6 +79,7 @@ async function createMusicWindow() {
         transparent: process.platform !== 'win32',
         frame: false,
         alwaysOnTop: true,
+        hasShadow: false,
         webPreferences: {
             nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
             webSecurity: false,

@@ -1,11 +1,11 @@
 <template>
   <div class="up-stat-info">
     <span class="stat-item">
-      <span class="label">在线人数：</span>
+      <span class="label">人气：</span>
       <span class="value">{{ online }}</span>
     </span>
     <span class="stat-item">
-      <span class="label">粉丝数：</span>
+      <span class="label">粉丝：</span>
       <span class="value">{{ upInfo.follower }}</span>
     </span>
   </div>
@@ -98,7 +98,7 @@ export default {
   .stat-item {
 
     + .stat-item {
-      margin-left: 20px;
+      margin-left: 10px;
     }
 
     .label {

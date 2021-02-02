@@ -10,12 +10,12 @@ import InteractWord from './components/interact-word';
 import SendGift from './components/send-gift';
 
 export default {
-  name: "message-item",
+  name: 'message-item',
   props: {
     data: {
       type: Object,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
   computed: {
     cmd() {
@@ -23,18 +23,21 @@ export default {
     },
     msgData() {
       return this.data.info || this.data.data;
-    }
+    },
+    showInteractWord() {
+      return !+localStorage.getItem('HIDE_INTERACT_WORD') || this.msgData.msg_type !== 1;
+    },
   },
   methods: {
     msgType(cmd) {
       return ({
         DANMU_MSG: DanmuMsg,
-        INTERACT_WORD: !+localStorage.getItem('HIDE_INTERACT_WORD') ? InteractWord : undefined,
+        INTERACT_WORD: this.showInteractWord ? InteractWord : undefined,
         SEND_GIFT: SendGift,
         // COMBO_SEND: SendGift,
       })[cmd];
-    }
-  }
+    },
+  },
 };
 
 </script>
@@ -43,6 +46,10 @@ export default {
 .message-item {
   + .message-item {
     margin-top: 8px;
+  }
+
+  &:empty {
+    margin-top: 0;
   }
 }
 </style>

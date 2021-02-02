@@ -9,13 +9,13 @@ const store = new Vuex.Store({
             state: {},
             mutations: {},
             actions: {},
-        }
+        },
     },
     state: {
         uid: localStorage.getItem('uid') || 0,
         roomId: 0,
         online: 0,
-        maxMsgLength: 200,
+        maxMsgLength: 600,
         messages: [],
     },
     mutations: {
@@ -34,11 +34,13 @@ const store = new Vuex.Store({
         },
         appendMessage(state, message) {
             state.messages.push(message);
+            const time2 = Date.now() - 10000;
+            state.messages = state.messages.filter(({ time, isEnter }) => !isEnter || time > time2);
             if (state.messages.length > state.maxMsgLength) {
-                state.messages.splice(0, state.messages.length - state.maxMsgLength);
+                state.messages.splice(0, state.messages.length - state.maxMsgLength / 2);
             }
-        }
-    }
+        },
+    },
 });
 
 export default store;

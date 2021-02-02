@@ -35,6 +35,12 @@ export default {
       return this.data.num || this.data.combo_num;
     },
   },
+  mounted() {
+    const url = 'http://tts.baidu.com/text2audio?lan=zh&ie=UTF-8&text='
+        + encodeURI(`谢谢${this.uname}${this.action}${this.num}个${this.giftName}`);
+    const audio = new Audio(url);
+    audio.play();
+  },
 };
 </script>
 <style src="./gift.css"/>

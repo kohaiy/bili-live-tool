@@ -12,17 +12,22 @@
       </el-form-item>
       <el-form-item label="">
         <el-checkbox size="mini" v-model="hideInteractWord">隐藏入场语</el-checkbox>
+        <el-checkbox size="mini" v-model="isPlayVoice">语音播报</el-checkbox>
       </el-form-item>
     </el-form>
     <div class="buttons">
       <el-button size="mini" @click="close">关闭</el-button>
       <el-button type="primary" @click="save" size="mini">保存</el-button>
     </div>
+    <div>
+      <el-button @click="handleOpenDrawGame">打开 DrawGame</el-button>
+    </div>
   </div>
 </template>
 
 <script>
 import { remote } from 'electron';
+import IpcRendererUtil from '@/utils/ipc-renderer.util';
 
 export default {
   name: 'Setting',
@@ -30,11 +35,15 @@ export default {
     return {
       uid: '',
       hideInteractWord: !!+localStorage.getItem('HIDE_INTERACT_WORD'),
+      isPlayVoice: !!+localStorage.getItem('IS_PLAY_VOICE'),
     };
   },
   watch: {
     hideInteractWord() {
       localStorage.setItem('HIDE_INTERACT_WORD', this.hideInteractWord ? '1' : '0');
+    },
+    isPlayVoice() {
+      localStorage.setItem('IS_PLAY_VOICE', this.isPlayVoice ? '1' : '');
     },
   },
   created() {
@@ -60,6 +69,9 @@ export default {
       const results = queryString ? uids.filter(uid => String(uid).indexOf(queryString) === 0) : uids;
       console.log(results);
       cb(results.map(value => ({ value })));
+    },
+    handleOpenDrawGame() {
+      IpcRendererUtil.send('OPEN_DRAW_GAME');
     },
   },
 };

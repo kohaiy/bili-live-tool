@@ -1,6 +1,6 @@
 <template>
   <div class="message-item">
-    <component :is="msgType(cmd)" :data="msgData"/>
+    <component :is="msgType(cmd)" :data="msgData" :ignoreVoice="data.ignore"/>
   </div>
 </template>
 

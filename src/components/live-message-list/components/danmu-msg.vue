@@ -17,12 +17,17 @@ export default {
       type: Array,
       default: () => [],
     },
+    ignoreVoice: {
+      type: Boolean,
+      default: false,
+    },
   },
   created() {
-    console.log(this.msg);
-    const url = 'http://tts.baidu.com/text2audio?lan=zh&ie=UTF-8&text=' + encodeURI(this.msg);
-    const audio = new Audio(url);
-    audio.play();
+    if (localStorage.getItem('IS_PLAY_VOICE') && !this.ignoreVoice) {
+      const url = 'http://tts.baidu.com/text2audio?lan=zh&ie=UTF-8&text=' + encodeURI(this.msg);
+      const audio = new Audio(url);
+      audio.play();
+    }
   },
   computed: {
     medal() {

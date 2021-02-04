@@ -18,6 +18,7 @@ import { mapState, mapMutations } from 'vuex';
 import { encode, decode } from '@/utils/bili-data.util';
 import MessageItem from '@/components/live-message-list/message-item';
 import NeteaseCloudUtil from '@/utils/netease-cloud.util';
+import IpcRendererUtil from '@/utils/ipc-renderer.util';
 
 let ws, timer;
 export default {
@@ -81,7 +82,6 @@ export default {
                 body.id = Date.now().toString() + `_${i}_` + Math.round(Math.random() * 8000 + 1000);
                 body.time = Date.now();
                 body.isEnter = body.cmd === 'INTERACT_WORD' && body.data.msg_type === 1;
-                this.appendMessage(body);
                 // console.log(body);
                 switch (body.cmd) {
                   case 'DANMU_MSG':
@@ -110,6 +110,7 @@ export default {
                   default:
                     console.log('body ->', body);
                 }
+                this.appendMessage(body);
               });
               break;
             default:
@@ -131,7 +132,7 @@ export default {
         this.unreadTotal++;
       }
       const [message, uname] = [body.info[1], body.info[2][1]];
-      if (/^点歌 /.test(message)) {
+      if (/^点歌/.test(message)) {
         const keywords = message.replace('点歌', '').trim();
         // 通过关键词搜索网易歌曲
         const song = await NeteaseCloudUtil.search(keywords);
@@ -149,6 +150,11 @@ export default {
           localStorage.setItem('NEW_SONG', JSON.stringify(song));
           // }
         }
+      } else if (message === '切歌') {
+        IpcRendererUtil.send('NEXT_SONG', uname);
+      } else if (/^\s*\d+[,，\s]\d+[,，\s][#＃][0-9a-fA-F]{3,6}\s*$/.test(message)) {
+        body.ignore = true;
+        IpcRendererUtil.send('DRAW_POINT', message);
       }
     },
     scrollToBottom() {

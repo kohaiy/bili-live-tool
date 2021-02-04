@@ -88,24 +88,7 @@ export default {
 </script>
 
 <style lang="scss">
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-
-  &::-webkit-scrollbar {
-    width: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 5px;
-    background-color: rgba(255, 255, 255, .1);
-  }
-
-  &::-webkit-scrollbar-track {
-    background-color: transparent;
-  }
-}
+@import './theme/common';
 
 .home {
   position: relative;

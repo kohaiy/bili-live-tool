@@ -13,14 +13,14 @@
       </div>
     </div>
     <div class="action-btn">
-<!--      <div class="show-more-btn"><i class="el-icon-s-operation"></i></div>-->
+      <!--      <div class="show-more-btn"><i class="el-icon-s-operation"></i></div>-->
       <el-button @click="handleNext" type="primary" size="mini">切歌</el-button>
       <el-button @click="handleClear" type="warning" size="mini">清空</el-button>
       <el-button @click="handleClose" type="danger" size="mini">关闭</el-button>
     </div>
     <div v-if="playing" class="playing">正在播放 - {{ playing.name }} - {{
         playing.artists.map(({ name }) => name).join(',')
-      }}
+      }}<span class="el-icon-scissors next-song">{{nextCount.size}}/{{MAX_NEXT_TOTAL}}</span>
     </div>
     <ul class="song-list">
       <li class="song-item" @click="handleClickSong(i)" v-for="(it, i) in songs" :key="it.id">
@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import { remote } from 'electron';
+import { remote, ipcRenderer } from 'electron';
 import NeteaseCloudUtil from '@/utils/netease-cloud.util';
 
 export default {
@@ -49,6 +49,9 @@ export default {
         currentTime: 0,
         volume: 1,
       },
+      // 切歌统计
+      nextCount: new Set(),
+      MAX_NEXT_TOTAL: 5,
     };
   },
   computed: {
@@ -59,6 +62,14 @@ export default {
     volumePercent() {
       return Math.round(this.audioInfo.volume * 100) || 0;
     },
+  },
+  created() {
+    ipcRenderer.on('NEXT_SONG', (event, uname) => {
+      this.nextCount.add(uname);
+      if (this.nextCount.size >= this.MAX_NEXT_TOTAL) {
+        this.play();
+      }
+    });
   },
   mounted() {
     this.play();
@@ -141,6 +152,7 @@ export default {
     },
     // 播放歌曲
     async play() {
+      this.nextCount = new Set();
       this.$nextTick(async () => {
         // 判断歌单是否有歌，且组件已就绪
         if (this.songs.length && this.$refs.audio) {
@@ -274,6 +286,7 @@ export default {
     .time {
       position: relative;
       font-size: 14px;
+      text-shadow: 0 0 4px #42b983;
     }
 
     .volume {
@@ -337,6 +350,11 @@ export default {
     color: #cccccc;
     text-shadow: 0 0 10px #ff4d51;
     //background-color: rgba(0, 0, 0, .8);
+
+    .next-song {
+      margin-left: 5px;
+      color: #ff4d51;
+    }
   }
 
   .action-btn {

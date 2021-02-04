@@ -11,7 +11,7 @@ protocol.registerSchemesAsPrivileged([
     { scheme: 'app', privileges: { secure: true, standard: true } },
 ]);
 
-let settingWin, musicWin;
+let settingWin, musicWin, drawGameWin;
 
 async function createWindow() {
     // Create the browser window.
@@ -98,6 +98,34 @@ async function createMusicWindow() {
     });
 }
 
+async function createDrawGameWindow() {
+    // Create the browser window.
+    drawGameWin = new BrowserWindow({
+        width: 360,
+        height: 280,
+        transparent: process.platform !== 'win32',
+        frame: false,
+        alwaysOnTop: true,
+        hasShadow: false,
+        webPreferences: {
+            nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
+            webSecurity: false,
+        },
+    });
+    if (process.env.WEBPACK_DEV_SERVER_URL) {
+        // Load the url of the dev server if in development mode
+        await drawGameWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + 'draw-game');
+    } else {
+        createProtocol('app');
+        // Load the index.html when not in development
+        await drawGameWin.loadURL('app://./draw-game.html');
+    }
+    drawGameWin.on('close', () => {
+        drawGameWin = null;
+    });
+}
+
+
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
     // On macOS it is common for applications and their menu bar
@@ -145,6 +173,22 @@ app.on('ready', async () => {
             createMusicWindow();
         }
         musicWin.focus();
+    });
+    IpcMainUtil.on('OPEN_DRAW_GAME', () => {
+        if (!drawGameWin) {
+            createDrawGameWindow();
+        }
+        drawGameWin.focus();
+    });
+    IpcMainUtil.on('DRAW_POINT', (message) => {
+        if (drawGameWin) {
+            drawGameWin.webContents.send('DRAW_POINT', message);
+        }
+    });
+    IpcMainUtil.on('NEXT_SONG', (uname) => {
+        if (musicWin) {
+            musicWin.webContents.send('NEXT_SONG', uname);
+        }
     });
     // IpcMainUtil.on('GET_SONG', (keywords) => {
     //     return NeteaseCloudUtil.search(keywords);

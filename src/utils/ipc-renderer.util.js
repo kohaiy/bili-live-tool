@@ -26,6 +26,10 @@ class IpcRendererUtil {
             });
         });
     }
+
+    static on(type, callback) {
+        console.log(type, callback);
+    }
 }
 
 export default IpcRendererUtil;

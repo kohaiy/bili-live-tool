@@ -4,6 +4,7 @@ module.exports = {
         index: 'src/main.js',
         setting: 'src/setting.js',
         music: 'src/music.js',
+        'draw-game': 'src/draw-game.js'
     },
     devServer: {
         historyApiFallback: {
@@ -11,6 +12,7 @@ module.exports = {
                 { from: /\/index/, to: '/index.html' },
                 { from: /\/setting/, to: '/setting.html' },
                 { from: /\/music/, to: '/music.html' },
+                { from: /\/draw-game/, to: '/draw-game.html' },
             ],
         },
     },

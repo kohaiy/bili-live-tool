@@ -36,10 +36,12 @@ export default {
     },
   },
   mounted() {
-    const url = 'http://tts.baidu.com/text2audio?lan=zh&ie=UTF-8&text='
-        + encodeURI(`谢谢${this.uname}${this.action}${this.num}个${this.giftName}`);
-    const audio = new Audio(url);
-    audio.play();
+    if (localStorage.getItem('IS_PLAY_VOICE')) {
+      const url = 'http://tts.baidu.com/text2audio?lan=zh&ie=UTF-8&text='
+          + encodeURI(`谢谢${this.uname}${this.action}${this.num}个${this.giftName}`);
+      const audio = new Audio(url);
+      audio.play();
+    }
   },
 };
 </script>

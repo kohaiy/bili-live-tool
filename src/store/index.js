@@ -1,15 +1,12 @@
 import Vuex from 'vuex';
 import Vue from 'vue';
+import snake from './modules/snake';
 
 Vue.use(Vuex);
 
 const store = new Vuex.Store({
     modules: {
-        user: {
-            state: {},
-            mutations: {},
-            actions: {},
-        },
+        snake,
     },
     state: {
         uid: localStorage.getItem('uid') || 0,

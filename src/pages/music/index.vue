@@ -5,8 +5,13 @@
     <div class="audio-controls">
       <div class="process-bar" :style="{ width: `${processPercent}%` }"></div>
       <div class="play-btn" @click="handlePlayBtnClick">
-        <i :class="`el-icon-video-${isPlaying ? 'pause' : 'play'}`"></i></div>
-      <div class="time">{{ audioInfo.currentTime | formatTime }}/{{ audioInfo.duration | formatTime }}</div>
+        <i :class="`el-icon-video-${isPlaying ? 'pause' : 'play'}`"></i>
+      </div>
+      <div class="time">
+        {{ audioInfo.currentTime | formatTime }}/{{
+          audioInfo.duration | formatTime
+        }}
+      </div>
       <div class="volume" ref="volume" @click="handleVolumeClick">
         <div class="volume-value">音量 {{ volumePercent }}%</div>
         <div class="volume-inner" :style="{ width: `${volumePercent}%` }"></div>
@@ -15,30 +20,42 @@
     <div class="action-btn">
       <!--      <div class="show-more-btn"><i class="el-icon-s-operation"></i></div>-->
       <el-button @click="handleNext" type="primary" size="mini">切歌</el-button>
-      <el-button @click="handleClear" type="warning" size="mini">清空</el-button>
+      <el-button @click="handleClear" type="warning" size="mini"
+        >清空</el-button
+      >
       <el-button @click="handleClose" type="danger" size="mini">关闭</el-button>
     </div>
-    <div v-if="playing" class="playing">正在播放 - {{ playing.name }} - {{
-        playing.artists.map(({ name }) => name).join(',')
-      }}<span class="el-icon-scissors next-song">{{nextCount.size}}/{{MAX_NEXT_TOTAL}}</span>
+    <div v-if="playing" class="playing">
+      正在播放 - {{ playing.name }} -
+      {{ playing.artists.map(({ name }) => name).join(",")
+      }}<span class="el-icon-scissors next-song"
+        >{{ nextCount.size }}/{{ MAX_NEXT_TOTAL }}</span
+      >
     </div>
     <ul class="song-list">
-      <li class="song-item" @click="handleClickSong(i)" v-for="(it, i) in songs" :key="it.id">
+      <li
+        class="song-item"
+        @click="handleClickSong(i)"
+        v-for="(it, i) in songs"
+        :key="it.id"
+      >
         <span class="uname">{{ it.uname }}</span>
         <span class="action">点了首</span>
         <span class="song-name">[ {{ it.name }} ]</span>
       </li>
-      <li class="songs-empty" v-if="!songs.length">暂无点歌信息<br>赶快发送 "点歌 + 空格 + 歌名" 点歌吧</li>
+      <li class="songs-empty" v-if="!songs.length">
+        暂无点歌信息<br />赶快发送 "点歌 + 空格 + 歌名" 点歌吧
+      </li>
     </ul>
   </div>
 </template>
 
 <script>
-import { remote, ipcRenderer } from 'electron';
-import NeteaseCloudUtil from '@/utils/netease-cloud.util';
+import { remote, ipcRenderer } from "electron";
+import NeteaseCloudUtil from "@/utils/netease-cloud.util";
 
 export default {
-  name: 'Music',
+  name: "Music",
   data() {
     return {
       isPlaying: false,
@@ -51,20 +68,24 @@ export default {
       },
       // 切歌统计
       nextCount: new Set(),
-      MAX_NEXT_TOTAL: 5,
+      MAX_NEXT_TOTAL: 3,
     };
   },
   computed: {
     // 进度条百分比
     processPercent() {
-      return Math.round((this.audioInfo.currentTime / this.audioInfo.duration) * 100) || 0;
+      return (
+        Math.round(
+          (this.audioInfo.currentTime / this.audioInfo.duration) * 100
+        ) || 0
+      );
     },
     volumePercent() {
       return Math.round(this.audioInfo.volume * 100) || 0;
     },
   },
   created() {
-    ipcRenderer.on('NEXT_SONG', (event, uname) => {
+    ipcRenderer.on("NEXT_SONG", (event, uname) => {
       this.nextCount.add(uname);
       if (this.nextCount.size >= this.MAX_NEXT_TOTAL) {
         this.play();
@@ -75,37 +96,38 @@ export default {
     this.play();
     // 每隔一秒读取缓存里面有没有新的歌要点
     setInterval(() => {
-      const song = JSON.parse(localStorage.getItem('NEW_SONG') || 'null');
+      const song = JSON.parse(localStorage.getItem("NEW_SONG") || "null");
       if (song) {
-        localStorage.setItem('NEW_SONG', 'null');
+        localStorage.setItem("NEW_SONG", "null");
         // 读取到歌曲，调用添加到方法
         this.handleAddSong(song);
       }
     }, 1000);
     // 监听歌曲状态
-    this.$refs.audio.addEventListener('play', () => {
+    this.$refs.audio.addEventListener("play", () => {
       this.isPlaying = true;
     });
-    this.$refs.audio.addEventListener('pause', () => {
+    this.$refs.audio.addEventListener("pause", () => {
       this.isPlaying = false;
     });
     // 监听音量改变
-    this.$refs.audio.addEventListener('volumechange', () => {
+    this.$refs.audio.addEventListener("volumechange", () => {
       this.audioInfo.volume = this.$refs.audio.volume;
     });
     // 监听歌曲结束，切歌
-    this.$refs.audio.addEventListener('ended', this.handleAudioEnded);
-    this.$refs.audio.addEventListener('timeupdate', () => {
+    this.$refs.audio.addEventListener("ended", this.handleAudioEnded);
+    this.$refs.audio.addEventListener("timeupdate", () => {
       this.audioInfo.currentTime = this.$refs.audio.currentTime;
     });
   },
   beforeDestroy() {
-    this.$refs.audio && this.$refs.audio.removeEventListener('ended', this.handleAudioEnded);
+    this.$refs.audio &&
+      this.$refs.audio.removeEventListener("ended", this.handleAudioEnded);
   },
   filters: {
     formatTime(seconds) {
       const minutes = Math.floor(seconds / 60);
-      return minutes + ':' + ('0' + Math.round(seconds % 60)).substr(-2);
+      return minutes + ":" + ("0" + Math.round(seconds % 60)).substr(-2);
     },
   },
   methods: {
@@ -138,11 +160,18 @@ export default {
     // 往歌单中添加歌曲
     handleAddSong(song) {
       // 判断歌单是否达到上限
-      if (this.songs.length < 100) {
+      if (
+        this.songs.length < +(localStorage.getItem("MAX_SONG_TOTAL") || "10")
+      ) {
         // 判断歌单中是否已有该歌曲
         if (!this.songs.some(({ id }) => id === song.id)) {
           this.songs.push(song);
           console.log(song);
+          this.$message({
+            type: "success",
+            message: `点歌成功，目前歌单有 ${this.songs.length} 首歌~~`,
+            duration: 2000,
+          });
           // 如果不在播放，则调用 play 播放
           if (!this.playing) {
             this.play();
@@ -168,8 +197,8 @@ export default {
           } catch (e) {
             console.log(e);
             this.$message({
-              type: 'error',
-              message: '哦欧，播放失败了，可能是没版权吧～',
+              type: "error",
+              message: "哦欧，播放失败了，可能是没版权吧～",
               duration: 1500,
             });
             // 播放失败后，播放下一首
@@ -180,7 +209,7 @@ export default {
         } else {
           // 清空正在播放的歌曲
           this.playing = null;
-          this.$refs.audio.src = '';
+          this.$refs.audio.src = "";
           // 获取随机歌曲
           await this.getRandomSong();
         }
@@ -220,12 +249,16 @@ export default {
 
   &::-webkit-scrollbar-thumb {
     border-radius: 5px;
-    background-color: rgba(255, 255, 255, .1);
+    background-color: rgba(255, 255, 255, 0.1);
   }
 
   &::-webkit-scrollbar-track {
     background-color: transparent;
   }
+}
+
+body {
+  background-color: transparent;
 }
 
 .music {
@@ -234,7 +267,8 @@ export default {
   width: 100%;
   height: 100vh;
   //padding: 20px;
-  -webkit-app-region: drag;
+  // -webkit-app-region: drag;
+  // background-color: rgba(0, 0, 0, .8);
 
   .audio-controls {
     position: relative;
@@ -247,7 +281,7 @@ export default {
     border-radius: 0;
     background-color: transparent;
     overflow: hidden;
-    transition: all .3s;
+    transition: all 0.3s;
     -webkit-app-region: no-drag;
 
     .process-bar {
@@ -256,16 +290,20 @@ export default {
       left: 0;
       height: 4px;
       background-color: #1979ec;
-      transition: all .3s;
+      transition: all 0.3s;
 
       &::after {
-        content: '';
+        content: "";
         position: absolute;
         top: 0;
         right: 0;
         bottom: 0;
         width: 20px;
-        background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, .2));
+        background: linear-gradient(
+          to right,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 0.2)
+        );
       }
     }
 
@@ -274,7 +312,7 @@ export default {
       margin-right: 10px;
       font-size: 20px;
       cursor: pointer;
-      transition: all .3s;
+      transition: all 0.3s;
       opacity: 0;
 
       &:hover {
@@ -299,7 +337,7 @@ export default {
       cursor: pointer;
       transform: translateY(100%);
       opacity: 0;
-      transition: all .3s;
+      transition: all 0.3s;
 
       .volume-value {
         position: absolute;
@@ -378,7 +416,8 @@ export default {
     padding: 24px 16px 16px;
     border-radius: 5px;
     overflow: auto;
-    background-color: rgba(0, 0, 0, .8);
+    -webkit-app-region: drag;
+    background-color: rgba(0, 0, 0, 0.8);
 
     .song-item {
       position: relative;
@@ -411,7 +450,7 @@ export default {
       }
 
       &::after {
-        content: '';
+        content: "";
         position: absolute;
         top: 0;
         left: 0;
@@ -424,7 +463,7 @@ export default {
         //transform: translateY(100%);
         //visibility: hidden;
         opacity: 0;
-        transition: all .3s;
+        transition: all 0.3s;
       }
 
       &:hover {

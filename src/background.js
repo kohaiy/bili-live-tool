@@ -11,7 +11,7 @@ protocol.registerSchemesAsPrivileged([
     { scheme: 'app', privileges: { secure: true, standard: true } },
 ]);
 
-let settingWin, musicWin, drawGameWin;
+let settingWin, musicWin, drawGameWin, snakeWin;
 
 async function createWindow() {
     // Create the browser window.
@@ -19,7 +19,7 @@ async function createWindow() {
         width: 360,
         height: 380,
         alwaysOnTop: true,
-        transparent: process.platform !== 'win32',
+        transparent: true, // process.platform !== 'win32',
         frame: false,
         opacity: 0.8,
         hasShadow: false,
@@ -37,7 +37,7 @@ async function createWindow() {
     if (process.env.WEBPACK_DEV_SERVER_URL) {
         // Load the url of the dev server if in development mode
         await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL);
-        if (!process.env.IS_TEST) win.webContents.openDevTools();
+        // if (!process.env.IS_TEST) win.webContents.openDevTools();
     } else {
         createProtocol('app');
         // Load the index.html when not in development
@@ -76,8 +76,9 @@ async function createMusicWindow() {
     musicWin = new BrowserWindow({
         width: 360,
         height: 280,
-        transparent: process.platform !== 'win32',
+        transparent: true, // process.platform !== 'win32',
         frame: false,
+        opacity: 0.8,
         alwaysOnTop: true,
         hasShadow: false,
         webPreferences: {
@@ -103,8 +104,9 @@ async function createDrawGameWindow() {
     drawGameWin = new BrowserWindow({
         width: 360,
         height: 280,
-        transparent: process.platform !== 'win32',
+        transparent: true, // process.platform !== 'win32',
         frame: false,
+        backgroundColor: '#00ffffff',
         alwaysOnTop: true,
         hasShadow: false,
         webPreferences: {
@@ -125,6 +127,33 @@ async function createDrawGameWindow() {
     });
 }
 
+async function createSnakeWindow() {
+    // Create the browser window.
+    snakeWin = new BrowserWindow({
+        width: 360,
+        height: 280,
+        transparent: true, // process.platform !== 'win32',
+        frame: false,
+        backgroundColor: '#00ffffff',
+        alwaysOnTop: true,
+        hasShadow: false,
+        webPreferences: {
+            nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
+            webSecurity: false,
+        },
+    });
+    if (process.env.WEBPACK_DEV_SERVER_URL) {
+        // Load the url of the dev server if in development mode
+        await snakeWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + 'snake');
+    } else {
+        createProtocol('app');
+        // Load the index.html when not in development
+        await snakeWin.loadURL('app://./snake.html');
+    }
+    snakeWin.on('close', () => {
+        snakeWin = null;
+    });
+}
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
@@ -183,6 +212,18 @@ app.on('ready', async () => {
     IpcMainUtil.on('DRAW_POINT', (message) => {
         if (drawGameWin) {
             drawGameWin.webContents.send('DRAW_POINT', message);
+        }
+    });
+    IpcMainUtil.on('OPEN_SNAKE_GAME', () => {
+        if (!snakeWin) {
+            createSnakeWindow();
+        }
+        snakeWin.focus();
+    });
+    IpcMainUtil.on('SNAKE_ACTION', (body) => {
+        console.log(body);
+        if (snakeWin) {
+            snakeWin.webContents.send('SNAKE_ACTION', body);
         }
     });
     IpcMainUtil.on('NEXT_SONG', (uname) => {

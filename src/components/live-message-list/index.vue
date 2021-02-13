@@ -131,7 +131,7 @@ export default {
       if (!this.isToBottom) {
         this.unreadTotal++;
       }
-      const [message, uname] = [body.info[1], body.info[2][1]];
+      const [message, uname, uid] = [body.info[1], body.info[2][1], body.info[2][0]];
       if (/^点歌/.test(message)) {
         const keywords = message.replace('点歌', '').trim();
         // 通过关键词搜索网易歌曲
@@ -151,7 +151,13 @@ export default {
           // }
         }
       } else if (message === '切歌') {
-        IpcRendererUtil.send('NEXT_SONG', uname);
+        IpcRendererUtil.send('NEXT_SONG', uid);
+      } else if (/^s/i.test(message)) {
+        body.ignore = true;
+        IpcRendererUtil.send('SNAKE_ACTION', {
+          uid,
+          message,
+        });
       } else if (/^\s*\d+[,，\s]\d+[,，\s][#＃][0-9a-fA-F]{3,6}\s*$/.test(message)) {
         body.ignore = true;
         IpcRendererUtil.send('DRAW_POINT', message);

@@ -3,11 +3,15 @@
     <div class="action-btn" @click="isLocked = !isLocked">
       <i :class="`el-icon-${isLocked ? 'lock' : 'unlock'}`"></i>
     </div>
+    <div class="move-btn" @click="isLocked = !isLocked">
+      <i class="el-icon-rank"></i>
+    </div>
     <canvas
         ref="canvas"
         @mouseenter="handleMouseEnter"
-        @mouseleave="handleMouseLeave"
-        @dblclick="handleClose"
+        @mousemove="handleMouseEnter"
+        @mouseleave.prevent="handleMouseLeave"
+        @dblclick.prevent="handleClose"
         :width="size.width"
         :height="size.height"
     ></canvas>
@@ -93,6 +97,7 @@ export default {
       }, 500);
     },
     handleMouseEnter() {
+      console.log('handleMouseEnter');
       if (this.isLocked) {
         remote.getCurrentWindow().setIgnoreMouseEvents(true, { forward: true });
       }
@@ -124,9 +129,10 @@ export default {
   width: 100%;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0);
-  -webkit-app-region: drag;
+  // -webkit-app-region: drag;
 
-  .action-btn {
+  .action-btn,
+  .move-btn {
     position: absolute;
     right: 0;
     top: 0;
@@ -134,6 +140,15 @@ export default {
     color: rgb(245, 135, 135);
     cursor: pointer;
     -webkit-app-region: no-drag;
+  }
+
+  .move-btn {
+    right: 30px;
+    color: #cccccc;
+    -webkit-app-region: drag;
+    &:hover {
+      color:  rgb(245, 135, 135);
+    }
   }
 }
 </style>

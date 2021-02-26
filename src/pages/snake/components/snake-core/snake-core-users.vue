@@ -2,6 +2,7 @@
   <div class="snake-core-users">
     <div
       class="user"
+      ref="userEl"
       :class="getClasses(user)"
       :style="getStyle(user)"
       :data-name="user.name"
@@ -14,6 +15,7 @@
 </template>
 <script>
 import { mapState } from 'vuex';
+import BiliApiUtil from '@/utils/bili-api.util';
 import SnakeHead from '../snake-head.vue';
 
 export default {
@@ -25,22 +27,46 @@ export default {
       default: 10,
     },
   },
+  data() {
+    return {
+      users: [],
+      userMap: new Map(),
+      steps: new Map(),
+    };
+  },
   computed: {
-    ...mapState('snake', ['users', 'now']),
+    ...mapState('snake', ['now', 'size']),
+  },
+  created() {
+    this.$bus.$on('setSteps', async ({ uid, steps }) => {
+      this.appendUser(uid);
+      console.log(uid, steps);
+      this.steps.set(uid, steps);
+      console.log(this.steps.get(uid));
+    });
+    this.$bus.$on('show', ({ uid }) => {
+      console.log(uid);
+      this.appendUser(uid);
+      console.log(this.users, this.userMap, this.steps);
+      console.log(this.$refs.userEl);
+    });
+    setInterval(() => {
+      this.updateStep();
+    }, 1000);
   },
   methods: {
     getClasses({ lastTime, isCross }) {
-      const timeDelta = this.now - lastTime;
+      // const timeDelta = this.now - lastTime;
       const classes = [];
-      if (timeDelta >= 30000) {
-        classes.push('hidden');
-      }
-      if (timeDelta <= 5000) {
-        classes.push('is-active');
-      }
-      if (isCross) {
-        classes.push('is-cross');
-      }
+      // if (timeDelta >= 30000) {
+      //   classes.push('hidden');
+      // }
+      // if (timeDelta <= 5000) {
+      //   classes.push('is-active');
+      // }
+      // if (isCross) {
+      //   classes.push('is-cross');
+      // }
       return classes;
     },
     getStyle({ position }) {
@@ -48,6 +74,60 @@ export default {
         top: `${(position.y + 0.5) * this.spacing}px`,
         left: `${(position.x + 0.5) * this.spacing}px`,
       };
+    },
+    async appendUser(uid) {
+      if (this.userMap.has(uid)) {
+        return this.userMap.get(uid);
+      }
+      const res = await BiliApiUtil.getUserInfo(uid);
+      if (res) {
+        const index = this.users.length;
+        const { name, face } = res;
+        const user = {
+          index,
+          uid,
+          name,
+          face,
+          score: 0,
+          position: {
+            x: Math.floor(Math.random() * (this.size.cols - 1)),
+            y: Math.floor(Math.random() * (this.size.rows - 1)),
+          },
+        };
+        this.userMap.set(uid, user);
+        this.users.push(user);
+        return user;
+      }
+    },
+    updateStep() {
+      [...this.steps.keys()].forEach((uid) => {
+        const steps = this.steps.get(uid);
+        if (!steps.length) {
+          return this.steps.delete(uid);
+        }
+        const user = this.userMap.get(uid);
+        const s = steps.shift();
+        // s 是 0 到 3，也可以用switch去case，因为是有序的，所以直接用数组来弄
+        // 数组的每个元素是函数，通过下标拿到后执行
+        [
+          () => (user.position.y -= 1),
+          () => (user.position.y += 1),
+          () => (user.position.x -= 1),
+          () => (user.position.x += 1),
+        ][s]();
+        if (user.position.y > this.size.rows) {
+          user.position.y = 0;
+        }
+        if (user.position.y < 0) {
+          user.position.y = this.size.rows;
+        }
+        if (user.position.x > this.size.cols) {
+          user.position.x = 0;
+        }
+        if (user.position.x < 0) {
+          user.position.x = this.size.cols;
+        }
+      });
     },
   },
 };
@@ -95,7 +175,7 @@ export default {
       opacity: 0;
     }
     &.is-cross {
-        transition-delay: 0s;
+      transition-delay: 0s;
     }
   }
 }

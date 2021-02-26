@@ -1,26 +1,30 @@
 <template>
   <div class="live-message-list" ref="list">
     <div class="live-message-list__inner">
-      <message-item v-for="(msg) in messages" :key="msg.id" :data="msg"/>
+      <message-item v-for="msg in messages" :key="msg.id" :data="msg" />
     </div>
-    <div class="to-bottom"
-         :class="{ 'is-hidden': isToBottom }"
-         title="到底部"
-         @click="handleToBottom">
-      <span v-if="unreadTotal" class="unread">{{ unreadTotal > 99 ? '∞' : unreadTotal }}</span>
+    <div
+      class="to-bottom"
+      :class="{ 'is-hidden': isToBottom }"
+      title="到底部"
+      @click="handleToBottom"
+    >
+      <span v-if="unreadTotal" class="unread">{{
+        unreadTotal > 99 ? '∞' : unreadTotal
+      }}</span>
       <i v-else class="el-icon-message-solid"></i>
     </div>
   </div>
 </template>
 
 <script>
-import { mapState, mapMutations } from 'vuex';
+import { mapState, mapMutations, mapActions } from 'vuex';
 import { encode, decode } from '@/utils/bili-data.util';
 import MessageItem from '@/components/live-message-list/message-item';
 import NeteaseCloudUtil from '@/utils/netease-cloud.util';
 import IpcRendererUtil from '@/utils/ipc-renderer.util';
 
-let ws, timer;
+let ws, timer, audio;
 export default {
   name: 'live-message-list',
   components: { MessageItem },
@@ -31,7 +35,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['messages', 'roomId']),
+    ...mapState(['messages', 'roomId', 'currentVoice']),
   },
   watch: {
     roomId: {
@@ -40,16 +44,27 @@ export default {
       },
       immediate: true,
     },
+    currentVoice() {
+      this.handlePlayVoice();
+    },
   },
   mounted() {
     // this.startWs();
     this.$refs.list.addEventListener('scroll', this.handleScroll);
+    // if (localStorage.getItem('IS_PLAY_VOICE')) {}
   },
   beforeDestroy() {
     this.$refs.list.removeEventListener('scroll', this.handleScroll);
   },
   methods: {
-    ...mapMutations(['setOnline', 'appendMessage']),
+    ...mapMutations([
+      'setOnline',
+      'appendMessage',
+      'nextVoice',
+      'appendVoice',
+      'resetVoiceType',
+    ]),
+    ...mapActions(['getVoiceType']),
     startWs() {
       if (ws) {
         ws.close();
@@ -60,11 +75,16 @@ export default {
       if (!this.roomId) return;
       ws = new WebSocket('ws://broadcastlv.chat.bilibili.com:2244/sub');
       ws.onopen = () => {
-        ws.send(encode(JSON.stringify({
-          protover: 1,
-          clientver: '1.4.0',
-          roomid: this.roomId,
-        }), 7));
+        ws.send(
+          encode(
+            JSON.stringify({
+              protover: 1,
+              clientver: '1.4.0',
+              roomid: this.roomId,
+            }),
+            7
+          )
+        );
         ws.send(encode('', 2));
         ws.onmessage = async (msgEvent) => {
           // console.log(msgEvent);
@@ -79,9 +99,13 @@ export default {
               break;
             case 5:
               packet.body.forEach((body, i) => {
-                body.id = Date.now().toString() + `_${i}_` + Math.round(Math.random() * 8000 + 1000);
+                body.id =
+                  Date.now().toString() +
+                  `_${i}_` +
+                  Math.round(Math.random() * 8000 + 1000);
                 body.time = Date.now();
-                body.isEnter = body.cmd === 'INTERACT_WORD' && body.data.msg_type === 1;
+                body.isEnter =
+                  body.cmd === 'INTERACT_WORD' && body.data.msg_type === 1;
                 // console.log(body);
                 switch (body.cmd) {
                   case 'DANMU_MSG':
@@ -94,19 +118,31 @@ export default {
                     break;
                   case 'COMBO_SEND':
                     // console.log('COMBO_SEND', body);
+                    this.appendVoice({
+                      uid: +localStorage.getItem('uid'),
+                      message: `谢谢${body.data.uname}${body.data.action}${
+                        body.data.num || body.data.combo_num
+                      }个${body.data.giftName || body.data.gift_name}`,
+                    });
                     break;
                   case 'INTERACT_WORD':
+                    if (body.data.msg_type === 2) {
+                      this.appendVoice({
+                        uid: +localStorage.getItem('uid'),
+                        message: `感谢${body.data.uname}的关注`,
+                      });
+                    }
                     if (body.data.msg_type > 2) {
                       console.error('body.data.msg_type > 2', body.data);
                     }
                     break;
-                    //   case 'WELCOME':
-                    //     console.log(`欢迎 ${body.data.uname}`);
-                    //     break;
-                    //     // 此处省略很多其他通知类型
-                    //   case "INTERACT_WORD":
-                    //     console.log(`%c[+] 欢迎 [${body.data.fans_medal.medal_name} ${body.data.fans_medal.medal_level}]${body.data.uname}`, 'color:#ccc;');
-                    //     break;
+                  //   case 'WELCOME':
+                  //     console.log(`欢迎 ${body.data.uname}`);
+                  //     break;
+                  //     // 此处省略很多其他通知类型
+                  //   case "INTERACT_WORD":
+                  //     console.log(`%c[+] 欢迎 [${body.data.fans_medal.medal_name} ${body.data.fans_medal.medal_level}]${body.data.uname}`, 'color:#ccc;');
+                  //     break;
                   default:
                     console.log('body ->', body);
                 }
@@ -131,7 +167,11 @@ export default {
       if (!this.isToBottom) {
         this.unreadTotal++;
       }
-      const [message, uname, uid] = [body.info[1], body.info[2][1], body.info[2][0]];
+      const [message, uname, uid] = [
+        body.info[1],
+        body.info[2][1],
+        body.info[2][0],
+      ];
       if (/^点歌/.test(message)) {
         const keywords = message.replace('点歌', '').trim();
         // 通过关键词搜索网易歌曲
@@ -158,9 +198,18 @@ export default {
           uid,
           message,
         });
-      } else if (/^\s*\d+[,，\s]\d+[,，\s][#＃][0-9a-fA-F]{3,6}\s*$/.test(message)) {
+      } else if (
+        /^\s*\d+[,，\s]\d+[,，\s][#＃][0-9a-fA-F]{3,6}\s*$/.test(message)
+      ) {
         body.ignore = true;
         IpcRendererUtil.send('DRAW_POINT', message);
+      } else {
+        if (message === '变声') {
+          this.resetVoiceType(uid);
+        }
+        if (localStorage.getItem('IS_PLAY_VOICE')) {
+          this.appendVoice({ uid, message });
+        }
       }
     },
     scrollToBottom() {
@@ -183,6 +232,47 @@ export default {
       this.isToBottom = scrollHeight - scrollTop - clientHeight <= 10;
       if (this.isToBottom) {
         this.unreadTotal = 0;
+      }
+    },
+    async handlePlayVoice() {
+      if (this.currentVoice) {
+        try {
+          let url;
+          if (+localStorage.getItem('TTS_SOURCE') === 1) {
+            const data = await IpcRendererUtil.send('TTS', {
+              Text: this.currentVoice.message,
+              VoiceType: await this.getVoiceType(this.currentVoice.uid),
+              secretId: localStorage.getItem('tts_secretId'),
+              secretKey: localStorage.getItem('tts_secretKey'),
+            });
+            if (!data) {
+              return this.nextVoice();
+            }
+            url = `data:audio/x-wav;base64,${data}`;
+            if (!audio) {
+              audio = new Audio();
+              audio.addEventListener('ended', () => {
+                this.nextVoice();
+              });
+            }
+            audio.src = url;
+
+            await audio.play();
+          } else {
+            // url =
+            //   'http://tts.baidu.com/text2audio?lan=zh&ie=UTF-8&text=' +
+            //   encodeURI(this.currentVoice.message);
+            const u = new SpeechSynthesisUtterance();
+            u.text = this.currentVoice.message;
+            u.lang = 'zh-CN';
+            u.rate = 1;
+            speechSynthesis.speak(u);
+            this.nextVoice();
+          }
+        } catch (e) {
+          console.error(e);
+          this.nextVoice();
+        }
       }
     },
   },
@@ -226,7 +316,7 @@ export default {
     opacity: 1;
     transform-origin: bottom right;
     transform: scale(1);
-    transition: all .3s;
+    transition: all 0.3s;
 
     &.is-hidden {
       transform: scale(0);

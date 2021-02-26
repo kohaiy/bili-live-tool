@@ -34,7 +34,7 @@ export default {
         DANMU_MSG: DanmuMsg,
         INTERACT_WORD: this.showInteractWord ? InteractWord : undefined,
         SEND_GIFT: SendGift,
-        // COMBO_SEND: SendGift,
+        COMBO_SEND: SendGift,
       })[cmd];
     },
   },

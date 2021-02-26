@@ -24,10 +24,10 @@ export default {
       this.addMessage(uid, message);
     });
     // this.randomMessage();
-    setInterval(() => {
-      this.updateNow();
-      // this.genFood();
-    }, 1000);
+    // setInterval(() => {
+    //   this.updateNow();
+    //   // this.genFood();
+    // }, 1000);
     setInterval(() => {
       this.genFood();
     }, 10000);
@@ -79,9 +79,11 @@ export default {
           return a;
         }, []);
         console.log(steps);
-        this.setSteps({ uid, steps });
+        // this.setSteps({ uid, steps });
+        this.$bus.$emit('setSteps', { uid, steps });
       } else if (message.trim().toUpperCase() === 'S') {
         // do nothing
+        this.$bus.$emit('show', { uid });
       } else {
         this.setUserPosition({
           uid,

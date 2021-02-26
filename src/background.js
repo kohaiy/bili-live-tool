@@ -3,6 +3,7 @@
 import { app, protocol, BrowserWindow } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import IpcMainUtil from '@/utils/ipc-main.util';
+import textToVoice from './utils/tts.util';
 // import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -51,6 +52,7 @@ async function createSettingWindow() {
         width: 360,
         height: 280,
         resizable: false,
+        autoHideMenuBar: true,
         webPreferences: {
             // Use pluginOptions.nodeIntegration, leave this alone
             // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
@@ -191,6 +193,9 @@ app.on('ready', async () => {
     }
     await createWindow();
     IpcMainUtil.initial();
+    IpcMainUtil.on('TTS', (params) => {
+        return textToVoice(params);
+    });
     IpcMainUtil.on('OPEN_SETTING', () => {
         if (!settingWin) {
             createSettingWindow();

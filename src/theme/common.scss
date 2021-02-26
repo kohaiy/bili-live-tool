@@ -15,4 +15,17 @@
     &::-webkit-scrollbar-track {
       background-color: transparent;
     }
+}
+
+.el-message {
+  justify-content: center;
+  padding: 8px 16px;
+  background-color: rgba(0, 0, 0, .8);
+  border-color: transparent;
+  .el-message__icon {
+    display: none;
   }
+  .el-message__content {
+    font-size: 14px;
+  }
+}

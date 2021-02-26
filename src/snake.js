@@ -8,6 +8,8 @@ console.log(store);
 IpcRendererUtil.initial();
 Vue.config.productionTip = false;
 
+Vue.prototype.$bus = new Vue();
+
 Vue.use(ElementUI);
 new Vue({
     store,

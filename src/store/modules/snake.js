@@ -1,3 +1,5 @@
+import User from '../../pages/snake/entries/user';
+
 function getRandomPosition(rows, cols) {
     const position = {
         x: Math.floor(Math.random() * (cols - 2) + 1),
@@ -19,6 +21,7 @@ const snake = {
             cols: 0,
         },
         now: Date.now(),
+        activeUsers: [],
     },
     mutations: {
         pushUser(state, user) {
@@ -29,10 +32,11 @@ const snake = {
                     x: Math.floor(Math.random() * (state.size.cols - 1)),
                     y: Math.floor(Math.random() * (state.size.rows - 1)),
                 };
+                user = new User(user);
                 state.userMap[uid] = user;
                 state.users.push(user);
             }
-            state.userMap[uid].lastTime = Date.now();
+            // state.userMap[uid].lastTime = Date.now();
         },
         setUserPosition(state, { uid, x, y }) {
             if (state.userMap[uid]) {

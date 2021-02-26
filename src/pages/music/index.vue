@@ -4,8 +4,11 @@
     <!-- 播放控制条 -->
     <div class="audio-controls">
       <div class="process-bar" :style="{ width: `${processPercent}%` }"></div>
-      <div class="play-btn" @click="handlePlayBtnClick">
+      <div class="play-btn" @click="handlePlayBtnClick" title="播放/暂停">
         <i :class="`el-icon-video-${isPlaying ? 'pause' : 'play'}`"></i>
+      </div>
+      <div class="play-btn" @click="handleNext" title="切歌">
+        <i class="el-icon-scissors"></i>
       </div>
       <div class="time">
         {{ audioInfo.currentTime | formatTime }}/{{
@@ -17,7 +20,7 @@
         <div class="volume-inner" :style="{ width: `${volumePercent}%` }"></div>
       </div>
     </div>
-    <div class="action-btn">
+    <div class="action-btn" v-show="false">
       <!--      <div class="show-more-btn"><i class="el-icon-s-operation"></i></div>-->
       <el-button @click="handleNext" type="primary" size="mini">切歌</el-button>
       <el-button @click="handleClear" type="warning" size="mini"
@@ -25,37 +28,47 @@
       >
       <el-button @click="handleClose" type="danger" size="mini">关闭</el-button>
     </div>
-    <div v-if="playing" class="playing">
-      正在播放 - {{ playing.name }} -
-      {{ playing.artists.map(({ name }) => name).join(",")
-      }}<span class="el-icon-scissors next-song"
-        >{{ nextCount.size }}/{{ MAX_NEXT_TOTAL }}</span
-      >
+    <div class="playing">
+      <div class="playing__inner" v-if="playing">
+        {{ playing.name }} -
+        {{ playing.artists.map(({ name }) => name).join(',')
+        }}<span class="el-icon-scissors next-song"
+          >{{ nextCount.size }}/{{ MAX_NEXT_TOTAL }}</span
+        >
+      </div>
+      <div class="playing__inner" v-else>暂无播放歌曲</div>
     </div>
-    <ul class="song-list">
-      <li
-        class="song-item"
-        @click="handleClickSong(i)"
-        v-for="(it, i) in songs"
-        :key="it.id"
-      >
-        <span class="uname">{{ it.uname }}</span>
-        <span class="action">点了首</span>
-        <span class="song-name">[ {{ it.name }} ]</span>
-      </li>
-      <li class="songs-empty" v-if="!songs.length">
-        暂无点歌信息<br />赶快发送 "点歌 + 空格 + 歌名" 点歌吧
-      </li>
-    </ul>
+    <div class="song-list__wrapper">
+      <div
+        class="song-list--blank"
+        @mouseenter="handleMouseEnter"
+        @mouseleave="handleMouseLeave"
+      ></div>
+      <ul class="song-list">
+        <li
+          class="song-item"
+          @click="handleClickSong(i)"
+          v-for="(it, i) in songs"
+          :key="it.id"
+        >
+          <span class="uname">{{ it.uname }}</span>
+          <span class="action">点了首</span>
+          <span class="song-name">[ {{ it.name }} ]</span>
+        </li>
+        <li class="songs-empty" v-if="!songs.length">
+          暂无点歌信息<br />赶快发送 "点歌 + 空格 + 歌名" 点歌吧
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script>
-import { remote, ipcRenderer } from "electron";
-import NeteaseCloudUtil from "@/utils/netease-cloud.util";
+import { remote, ipcRenderer } from 'electron';
+import NeteaseCloudUtil from '@/utils/netease-cloud.util';
 
 export default {
-  name: "Music",
+  name: 'Music',
   data() {
     return {
       isPlaying: false,
@@ -85,7 +98,7 @@ export default {
     },
   },
   created() {
-    ipcRenderer.on("NEXT_SONG", (event, uname) => {
+    ipcRenderer.on('NEXT_SONG', (event, uname) => {
       this.nextCount.add(uname);
       if (this.nextCount.size >= this.MAX_NEXT_TOTAL) {
         this.play();
@@ -96,38 +109,38 @@ export default {
     this.play();
     // 每隔一秒读取缓存里面有没有新的歌要点
     setInterval(() => {
-      const song = JSON.parse(localStorage.getItem("NEW_SONG") || "null");
+      const song = JSON.parse(localStorage.getItem('NEW_SONG') || 'null');
       if (song) {
-        localStorage.setItem("NEW_SONG", "null");
+        localStorage.setItem('NEW_SONG', 'null');
         // 读取到歌曲，调用添加到方法
         this.handleAddSong(song);
       }
     }, 1000);
     // 监听歌曲状态
-    this.$refs.audio.addEventListener("play", () => {
+    this.$refs.audio.addEventListener('play', () => {
       this.isPlaying = true;
     });
-    this.$refs.audio.addEventListener("pause", () => {
+    this.$refs.audio.addEventListener('pause', () => {
       this.isPlaying = false;
     });
     // 监听音量改变
-    this.$refs.audio.addEventListener("volumechange", () => {
+    this.$refs.audio.addEventListener('volumechange', () => {
       this.audioInfo.volume = this.$refs.audio.volume;
     });
     // 监听歌曲结束，切歌
-    this.$refs.audio.addEventListener("ended", this.handleAudioEnded);
-    this.$refs.audio.addEventListener("timeupdate", () => {
+    this.$refs.audio.addEventListener('ended', this.handleAudioEnded);
+    this.$refs.audio.addEventListener('timeupdate', () => {
       this.audioInfo.currentTime = this.$refs.audio.currentTime;
     });
   },
   beforeDestroy() {
     this.$refs.audio &&
-      this.$refs.audio.removeEventListener("ended", this.handleAudioEnded);
+      this.$refs.audio.removeEventListener('ended', this.handleAudioEnded);
   },
   filters: {
     formatTime(seconds) {
       const minutes = Math.floor(seconds / 60);
-      return minutes + ":" + ("0" + Math.round(seconds % 60)).substr(-2);
+      return minutes + ':' + ('0' + Math.round(seconds % 60)).substr(-2);
     },
   },
   methods: {
@@ -158,20 +171,22 @@ export default {
       this.play();
     },
     // 往歌单中添加歌曲
-    handleAddSong(song) {
+    handleAddSong(song, isSys = false) {
       // 判断歌单是否达到上限
       if (
-        this.songs.length < +(localStorage.getItem("MAX_SONG_TOTAL") || "10")
+        this.songs.length < +(localStorage.getItem('MAX_SONG_TOTAL') || '10')
       ) {
         // 判断歌单中是否已有该歌曲
         if (!this.songs.some(({ id }) => id === song.id)) {
           this.songs.push(song);
           console.log(song);
-          this.$message({
-            type: "success",
-            message: `点歌成功，目前歌单有 ${this.songs.length} 首歌~~`,
-            duration: 2000,
-          });
+          if (!isSys) {
+            this.$message({
+              type: 'success',
+              message: `点歌成功，目前歌单有 ${this.songs.length} 首歌~~`,
+              duration: 2000,
+            });
+          }
           // 如果不在播放，则调用 play 播放
           if (!this.playing) {
             this.play();
@@ -197,8 +212,8 @@ export default {
           } catch (e) {
             console.log(e);
             this.$message({
-              type: "error",
-              message: "哦欧，播放失败了，可能是没版权吧～",
+              type: 'error',
+              message: '哦欧，播放失败了，可能是没版权吧～',
               duration: 1500,
             });
             // 播放失败后，播放下一首
@@ -209,7 +224,7 @@ export default {
         } else {
           // 清空正在播放的歌曲
           this.playing = null;
-          this.$refs.audio.src = "";
+          this.$refs.audio.src = '';
           // 获取随机歌曲
           await this.getRandomSong();
         }
@@ -221,7 +236,7 @@ export default {
       if (trackIds) {
         const { id } = trackIds[Math.floor(Math.random() * trackIds.length)];
         const song = await NeteaseCloudUtil.getSongDetail(id);
-        this.handleAddSong(song);
+        this.handleAddSong(song, true);
       }
     },
     // 点击删除歌曲
@@ -233,29 +248,18 @@ export default {
     handleClose() {
       remote.getCurrentWindow().close();
     },
+    handleMouseEnter() {
+      remote.getCurrentWindow().setIgnoreMouseEvents(true, { forward: true });
+    },
+    handleMouseLeave() {
+      remote.getCurrentWindow().setIgnoreMouseEvents(false);
+    },
   },
 };
 </script>
 
 <style lang="scss">
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-
-  &::-webkit-scrollbar {
-    width: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 5px;
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-
-  &::-webkit-scrollbar-track {
-    background-color: transparent;
-  }
-}
+@import '../../theme/common.scss';
 
 body {
   background-color: transparent;
@@ -290,10 +294,11 @@ body {
       left: 0;
       height: 4px;
       background-color: #1979ec;
-      transition: all 0.3s;
+      overflow: hidden;
+      transition: all 0.3s ease-in-out;
 
       &::after {
-        content: "";
+        content: '';
         position: absolute;
         top: 0;
         right: 0;
@@ -302,8 +307,11 @@ body {
         background: linear-gradient(
           to right,
           rgba(255, 255, 255, 0),
-          rgba(255, 255, 255, 0.2)
+          rgba(255, 255, 255, 0.2),
+          rgba(255, 255, 255, 0.4),
+          rgba(255, 255, 255, 0)
         );
+        animation: shan 5s linear infinite;
       }
     }
 
@@ -325,6 +333,7 @@ body {
       position: relative;
       font-size: 14px;
       text-shadow: 0 0 4px #42b983;
+      opacity: 0;
     }
 
     .volume {
@@ -371,6 +380,10 @@ body {
         opacity: 1;
       }
 
+      .time {
+        opacity: 1;
+      }
+
       .volume {
         transform: translateY(0);
         opacity: 1;
@@ -379,19 +392,30 @@ body {
   }
 
   .playing {
-    position: relative;
-    bottom: -12px;
-    height: 0;
+    // position: relative;
+    // bottom: -12px;
+    // height: 0;
     //margin-top: 20px;
-    text-align: center;
-    font-size: 14px;
-    color: #cccccc;
-    text-shadow: 0 0 10px #ff4d51;
-    //background-color: rgba(0, 0, 0, .8);
+    overflow: hidden;
+    .playing__inner {
+      display: inline-block;
+      min-width: 100%;
+      padding: 0 10px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: rgb(255, 51, 163);
+      // text-shadow: 0 0 10px #ff4d51;
+      // -webkit-text-stroke: 0.5px #000;
+      text-shadow: 0 0 4px #000;
+      white-space: nowrap;
+      // background-color: rgba(228, 85, 241, 0.8);
+      animation: lunbo 16s ease-in-out infinite;
 
-    .next-song {
-      margin-left: 5px;
-      color: #ff4d51;
+      .next-song {
+        margin-left: 5px;
+        color: #ff4d51;
+      }
     }
   }
 
@@ -409,15 +433,33 @@ body {
       //visibility: hidden;
     }
   }
-
-  .song-list {
+  .song-list__wrapper {
     flex: 1;
-    margin-top: 4px;
-    padding: 24px 16px 16px;
+    position: relative;
+    overflow: hidden;
+    .song-list--blank {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      // background-color: #f00;
+    }
+  }
+  .song-list {
+    position: relative;
+    // flex: 1;
+    // margin-top: 4px;
+    padding: 8px 16px;
     border-radius: 5px;
     overflow: auto;
     -webkit-app-region: drag;
     background-color: rgba(0, 0, 0, 0.8);
+    // background: linear-gradient(
+    //   to bottom,
+    //   rgba(0, 0, 0, .8),
+    //   rgba(0, 0, 0, .1)
+    // );
 
     .song-item {
       position: relative;
@@ -450,7 +492,7 @@ body {
       }
 
       &::after {
-        content: "";
+        content: '';
         position: absolute;
         top: 0;
         left: 0;
@@ -477,10 +519,32 @@ body {
 
     .songs-empty {
       list-style: none;
-      margin-top: 10px;
+      // margin-top: 10px;
       text-align: center;
+      font-size: 14px;
       color: #eeeeee;
     }
+  }
+}
+
+@keyframes lunbo {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(calc(360px - 100%));
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes shan {
+  0% {
+    left: -20px;
+  }
+  100% {
+    left: 360px;
   }
 }
 </style>

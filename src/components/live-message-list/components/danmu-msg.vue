@@ -10,6 +10,8 @@
 </template>
 
 <script>
+import IpcRendererUtil from '@/utils/ipc-renderer.util';
+
 export default {
   name: 'danmu-msg',
   props: {
@@ -22,12 +24,14 @@ export default {
       default: false,
     },
   },
-  created() {
-    if (localStorage.getItem('IS_PLAY_VOICE') && !this.ignoreVoice) {
-      const url = 'http://tts.baidu.com/text2audio?lan=zh&ie=UTF-8&text=' + encodeURI(this.msg);
-      const audio = new Audio(url);
-      audio.play();
-    }
+  async created() {
+    // if (localStorage.getItem('IS_PLAY_VOICE') && !this.ignoreVoice) {
+    //   const data = await IpcRendererUtil.send('TTS', { Text: this.msg, VoiceType: 101016 });
+    //   const url = `data:audio/x-wav;base64,${data}`;
+    //   // const url = 'http://tts.baidu.com/text2audio?lan=zh&ie=UTF-8&text=' + encodeURI(this.msg);
+    //   const audio = new Audio(url);
+    //   audio.play();
+    // }
   },
   computed: {
     medal() {

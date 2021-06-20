@@ -33,9 +33,10 @@ class NeteaseCloudUtil {
         return null;
     }
 
-    static async getHotList() {
+    static async getHotList(id) {
+        id = id || '3778678';
         let data = {
-            id: '3778678',
+            id,
         };
         const formData = new FormData();
         Object.keys(data).forEach(key => {
@@ -43,7 +44,10 @@ class NeteaseCloudUtil {
         });
         data.csrf_token = '';
         data = encrypt.weapi(data);
-        const res = await axios.post('https://music.163.com/api/v6/playlist/detail?id=3778678', querystring.stringify(data), {
+        const res = await axios.post('https://music.163.com/api/v6/playlist/detail', querystring.stringify(data), {
+            params: {
+                id,
+            },
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },

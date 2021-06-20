@@ -6,23 +6,32 @@
           size="mini"
           v-model="uid"
           :fetch-suggestions="querySearch"
-          placeholder="请输入内容"
+          placeholder="UP的UID"
         ></el-autocomplete>
       </el-form-item>
-      <el-form-item label="歌单上限:">
+      <el-form-item label="歌单上限: (小于等于 0 表示不能点歌)">
         <el-input-number size="mini" v-model="maxSongTotal" />
+      </el-form-item>
+      <el-form-item label="默认歌单: (歌单空闲时随机播放)">
+        <el-input size="mini" v-model="playlistId" />
+      </el-form-item>
+      <el-form-item label="歌曲黑名单: (多个用 , 分隔)">
+        <el-input size="mini" v-model="blackList" />
       </el-form-item>
       <div class="buttons">
         <el-button type="primary" @click="save" size="mini">保存</el-button>
       </div>
     </el-form>
     <hr />
+    <!-- <p>歌曲黑名单</p> -->
+    <!-- <hr /> -->
     <p>
       <el-checkbox size="mini" v-model="hideInteractWord">
         隐藏入场语
       </el-checkbox>
       <el-checkbox size="mini" v-model="isPlayVoice">语音播报</el-checkbox>
     </p>
+    <!-- 语音播报 -->
     <p v-show="isPlayVoice">
       <el-radio-group
         v-model="ttsSource"
@@ -71,6 +80,8 @@ export default {
     return {
       uid: '',
       maxSongTotal: +(localStorage.getItem('MAX_SONG_TOTAL') || '10'),
+      playlistId: +(localStorage.getItem('PLAYLIST_ID') || '3778678'),
+      blackList: localStorage.getItem('BLACK_LIST') || '',
       hideInteractWord: !!+localStorage.getItem('HIDE_INTERACT_WORD'),
       isPlayVoice: !!+localStorage.getItem('IS_PLAY_VOICE'),
       ttsSource: +(localStorage.getItem('TTS_SOURCE') || '0'),
@@ -108,11 +119,12 @@ export default {
           uids.push(this.uid);
         }
         localStorage.setItem('uids', JSON.stringify(uids));
-        // this.close();
       }
-      if (this.maxSongTotal) {
+      if (this.maxSongTotal || this.maxSongTotal === 0) {
         localStorage.setItem('MAX_SONG_TOTAL', this.maxSongTotal);
       }
+      localStorage.setItem('PLAYLIST_ID', this.playlistId);
+      localStorage.setItem('BLACK_LIST', this.blackList);
     },
     close() {
       remote.getCurrentWindow().close();
@@ -141,6 +153,10 @@ export default {
 
   .buttons {
     text-align: right;
+  }
+
+  .el-form-item {
+    margin-bottom: 12px;
   }
 }
 </style>

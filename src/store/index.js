@@ -77,10 +77,12 @@ const store = new Vuex.Store({
             }
         },
         appendVoice(state, msg) {
-            if (state.voiceMsgs.length || state.currentVoice) {
-                state.voiceMsgs.push(msg);
-            } else {
-                state.currentVoice = msg;
+            if (localStorage.getItem('IS_PLAY_VOICE')) {
+                if (state.voiceMsgs.length || state.currentVoice) {
+                    state.voiceMsgs.push(msg);
+                } else {
+                    state.currentVoice = msg;
+                }
             }
         },
         nextVoice(state) {

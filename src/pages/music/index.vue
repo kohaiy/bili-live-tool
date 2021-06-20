@@ -10,6 +10,9 @@
       <div class="play-btn" @click="handleNext" title="切歌">
         <i class="el-icon-scissors"></i>
       </div>
+      <div class="play-btn" @click="handleClose" title="关闭">
+        <i class="el-icon-circle-close"></i>
+      </div>
       <div class="time">
         {{ audioInfo.currentTime | formatTime }}/{{
           audioInfo.duration | formatTime
@@ -172,6 +175,10 @@ export default {
     },
     // 往歌单中添加歌曲
     handleAddSong(song, isSys = false) {
+      const blackList = localStorage.getItem('BLACK_LIST') || '';
+      if (song && blackList.includes(song.id.toString())) {
+        return;
+      }
       // 判断歌单是否达到上限
       if (
         this.songs.length < +(localStorage.getItem('MAX_SONG_TOTAL') || '10')
@@ -179,7 +186,6 @@ export default {
         // 判断歌单中是否已有该歌曲
         if (!this.songs.some(({ id }) => id === song.id)) {
           this.songs.push(song);
-          console.log(song);
           if (!isSys) {
             this.$message({
               type: 'success',
@@ -192,6 +198,12 @@ export default {
             this.play();
           }
         }
+      } else if (!isSys) {
+        this.$message({
+          type: 'error',
+          message: '歌单已满~~',
+          duration: 2000,
+        });
       }
     },
     // 播放歌曲
@@ -203,14 +215,15 @@ export default {
           try {
             // 取出歌单中的第一首
             this.playing = this.songs.shift();
-            const { id } = this.playing;
+            const { id, name } = this.playing;
+            console.log(id, name);
             this.$refs.audio.src = `https://music.163.com/song/media/outer/url?id=${id}.mp3`;
             // 开始播放
             await this.$refs.audio.play();
             // 保存歌曲时长
             this.audioInfo.duration = this.$refs.audio.duration;
           } catch (e) {
-            console.log(e);
+            console.error(e);
             this.$message({
               type: 'error',
               message: '哦欧，播放失败了，可能是没版权吧～',
@@ -232,7 +245,7 @@ export default {
     },
     // 获取热门歌单中的随机歌曲
     async getRandomSong() {
-      const trackIds = await NeteaseCloudUtil.getHotList();
+      const trackIds = await NeteaseCloudUtil.getHotList(localStorage.getItem('PLAYLIST_ID'));
       if (trackIds) {
         const { id } = trackIds[Math.floor(Math.random() * trackIds.length)];
         const song = await NeteaseCloudUtil.getSongDetail(id);

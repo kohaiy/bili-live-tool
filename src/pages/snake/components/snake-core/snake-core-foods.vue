@@ -1,7 +1,7 @@
 <template>
   <div class="snake-core-foods">
     <div
-      class="food gift-img gift-frame gift-1-20"
+      class="food gift-img gift-frame gift-1"
       :style="getStyle(food)"
       v-for="food in foods"
       :key="food.id"
@@ -11,7 +11,6 @@
 
 <script>
 import { mapState } from 'vuex';
-import '@/theme/gift.css';
 
 export default {
   name: 'SnakeCoreFoods',

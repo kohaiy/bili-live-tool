@@ -4,7 +4,7 @@
     <span class="uname">{{ uname }}</span>
     <span class="action">{{ action }}</span>
     <span class="gift-name">{{ giftName }}</span>
-    <span class="gift-img gift-frame" :class="`gift-${giftId}-20`"></span>
+    <span class="gift-img gift-frame" :class="`gift-${giftId}`"></span>
     <span class="num">x{{ num }}</span>
   </div>
 </template>
@@ -45,7 +45,7 @@ export default {
   },
 };
 </script>
-<style src="./gift.css"/>
+
 <style lang="scss" scoped>
 .send-gift {
   font-size: 12px;
@@ -68,8 +68,8 @@ export default {
 
   .gift-img {
     display: inline-block;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
 
   .num {

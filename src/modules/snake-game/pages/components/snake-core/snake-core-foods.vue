@@ -10,8 +10,6 @@
 </template>
 
 <script>
-import '@/theme/gift.css';
-
 export default {
   name: 'SnakeCoreFoods',
   props: {

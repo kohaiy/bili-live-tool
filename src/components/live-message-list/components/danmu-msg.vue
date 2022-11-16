@@ -10,8 +10,6 @@
 </template>
 
 <script>
-import IpcRendererUtil from '@/utils/ipc-renderer.util';
-
 export default {
   name: 'danmu-msg',
   props: {
